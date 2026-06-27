@@ -1,0 +1,55 @@
+name: Update TinyBlox Stats
+
+on:
+  workflow_dispatch:
+
+  schedule:
+    # Every 15 minutes
+    - cron: "*/15 * * * *"
+
+permissions:
+  contents: write
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install google-analytics-data
+
+      - name: Create credentials
+        run: |
+          echo '${{ secrets.GOOGLE_CREDENTIALS }}' > credentials.json
+
+      - name: Set Google credentials
+        run: |
+          echo "GOOGLE_APPLICATION_CREDENTIALS=$(pwd)/credentials.json" >> $GITHUB_ENV
+
+      - name: Update statistics
+        run: |
+          python scripts/update_stats.py
+
+      - name: Commit updated statistics
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git add api/stats.json
+
+          if git diff --cached --quiet; then
+            echo "No statistics changed."
+          else
+            git commit -m "Update stats.json"
+            git push
+          fi
