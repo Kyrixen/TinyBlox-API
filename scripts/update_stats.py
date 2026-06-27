@@ -13,11 +13,12 @@ PROPERTY_ID = "543461935"
 
 client = BetaAnalyticsDataClient()
 
+# Total views in last 30 days
 request = RunReportRequest(
     property=f"properties/{PROPERTY_ID}",
     dimensions=[Dimension(name="date")],
     metrics=[Metric(name="screenPageViews")],
-    date_ranges=[DateRange(start_date="30daysAgo", end_date="today")],
+    date_ranges=[DateRange(start_date="2026-06-25", end_date="today")],
 )
 
 response = client.run_report(request)
@@ -27,8 +28,20 @@ views = 0
 for row in response.rows:
     views += int(row.metric_values[0].value)
 
+request = RunReportRequest(
+    property=f"properties/{PROPERTY_ID}",
+    dimensions=[Dimension(name="country")],
+    metrics=[Metric(name="screenPageViews")],
+    date_ranges=[DateRange(start_date="2026-06-25", end_date="today")],
+)
+
+response = client.run_report(request)
+topCountry = response.rows[0].dimension_values[0].value
+
+
 stats = {
-    "views": views
+    "views": views,
+    "topCountry" : topCountry
 }
 
 path = "api/stats.json"
